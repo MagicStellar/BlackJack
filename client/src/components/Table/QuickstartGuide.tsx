@@ -43,7 +43,7 @@ export const QuickstartGuide: React.FC<QuickstartGuideProps> = ({ onClose }) => 
                 {
                   step: '1',
                   title: 'Play Blackjack',
-                  desc: 'Everyone gets 2 cards. Hit (draw more) or Stand (lock in). Try to reach 21 without going over.',
+                  desc: 'Everyone gets 2 cards. Opponent hands & scores are hidden until scoring! Hit or Stand to get near 21.',
                   color: 'border-accent-gold/40 bg-accent-gold/5',
                 },
                 {

@@ -15,6 +15,7 @@ interface PlayerSeatProps {
   player: PlayerState;
   isActiveTurn: boolean;
   isMe: boolean;
+  phase?: string;
   onSelectCard?: (card: Card) => void;
   selectedCardId?: string;
   selectableCards?: boolean;
@@ -25,12 +26,15 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   player,
   isActiveTurn,
   isMe,
+  phase = '',
   onSelectCard,
   selectedCardId,
   selectableCards = false,
   compact = false,
 }) => {
   const isEliminated = player.status === 'eliminated';
+  const isScoringPhase = ['scoring', 'rouletteCheck', 'roundEnd', 'matchEnd'].includes(phase);
+  const revealCards = isMe || isScoringPhase;
 
   return (
     <div
@@ -95,14 +99,16 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
         {!isEliminated && player.hand.length > 0 && (
           <span
             className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded font-bold font-serif ${
-              player.isBusted
+              !revealCards
+                ? 'bg-neutral-800/80 text-text-muted border border-neutral-700/70 tracking-wider'
+                : player.isBusted
                 ? 'bg-danger-red/30 text-danger-glow border border-danger-red/50'
                 : player.score === 21
                 ? 'bg-accent-gold text-neutral-950'
                 : 'bg-neutral-800 text-text-primary border border-neutral-700'
             }`}
           >
-            {player.isBusted ? 'BUST' : player.score}
+            {!revealCards ? '???' : player.isBusted ? 'BUST' : player.score}
           </span>
         )}
 
@@ -132,11 +138,11 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
             {player.hand.map((card, idx) => (
               <PlayingCard
                 key={card.id || `${player.id}-${idx}`}
-                card={card}
+                card={revealCards ? { ...card, faceUp: true } : { ...card, faceUp: false }}
                 index={idx}
                 isSelected={selectedCardId === card.id}
                 onClick={() => onSelectCard?.(card)}
-                selectable={selectableCards}
+                selectable={selectableCards && revealCards}
                 compact={compact}
               />
             ))}

@@ -98,6 +98,7 @@ blackjack-roulette/
 - Ace = 1 **or** 11 (whichever keeps the hand ≤ 21)
 - Bust (>21) = ranked last for that round
 - Tie-break: fewer cards in hand wins
+- **Hidden Hands** — Players can see only their own cards during the round. Opponent hands and scores remain hidden until the scoring phase, when all hands are revealed.
 
 ### Round Flow
 ```

@@ -120,21 +120,21 @@ export const GameTable: React.FC = () => {
             {/* ── PLAYER 3  upper-LEFT (11 o'clock) ── */}
             {upperLeftP && (
               <div className="absolute z-10" style={{ top: '12%', left: '18%', transform: 'translate(-50%, 0)' }}>
-                <PlayerSeat player={upperLeftP} isActiveTurn={upperLeftP.id === activePlayerId} isMe={upperLeftP.id === myPlayerId} compact />
+                <PlayerSeat player={upperLeftP} isActiveTurn={upperLeftP.id === activePlayerId} isMe={upperLeftP.id === myPlayerId} phase={phase} compact />
               </div>
             )}
 
             {/* ── PLAYER 2  left (9 o'clock) ── */}
             {leftP && (
               <div className="absolute z-10" style={{ top: '56%', left: '3%', transform: 'translateY(-50%)' }}>
-                <PlayerSeat player={leftP} isActiveTurn={leftP.id === activePlayerId} isMe={leftP.id === myPlayerId} compact />
+                <PlayerSeat player={leftP} isActiveTurn={leftP.id === activePlayerId} isMe={leftP.id === myPlayerId} phase={phase} compact />
               </div>
             )}
 
             {/* ── PLAYER 4  right (3 o'clock) ── */}
             {rightP && (
               <div className="absolute z-10" style={{ top: '50%', right: '3%', transform: 'translateY(-50%)' }}>
-                <PlayerSeat player={rightP} isActiveTurn={rightP.id === activePlayerId} isMe={rightP.id === myPlayerId} compact />
+                <PlayerSeat player={rightP} isActiveTurn={rightP.id === activePlayerId} isMe={rightP.id === myPlayerId} phase={phase} compact />
               </div>
             )}
 
@@ -153,7 +153,7 @@ export const GameTable: React.FC = () => {
             {/* ── ME (Player 1)  bottom-center ── */}
             {me && (
               <div className="absolute z-10" style={{ bottom: '3%', left: '50%', transform: 'translateX(-50%)' }}>
-                <PlayerSeat player={me} isActiveTurn={me.id === activePlayerId} isMe={me.id === myPlayerId} />
+                <PlayerSeat player={me} isActiveTurn={me.id === activePlayerId} isMe={me.id === myPlayerId} phase={phase} />
               </div>
             )}
           </div>
