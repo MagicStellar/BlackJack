@@ -1,0 +1,270 @@
+# Blackjack Roulette — Game Design & Technical Specification
+
+> Working title: **Blackjack Roulette**
+> Genre: Multiplayer turn-based strategy / survival
+> Platform: Web (primary), wrapped as native app later via Capacitor
+> Prototype scope: 4 players, single match, no persistence beyond a session
+
+This document is written to be handed directly to an AI coding assistant (Cursor) as a build spec. It contains the full game design, data model, networking contract, and UI/visual direction needed to scaffold and implement the prototype.
+
+---
+
+## 1. High Concept
+
+A multiplayer strategy game combining **Blackjack** rounds with a **Russian Roulette** survival twist. Every round, the lowest-scoring player risks elimination. Players hold a small inventory of items that let them manipulate their odds — in the cards, and in the chamber.
+
+**One-line pitch:** *Buckshot Roulette meets the blackjack table.*
+
+## 2. Design Pillars
+
+- **High tension** — every round has real stakes; someone is always one bad pull from being out.
+- **Easy to learn** — blackjack rules are near-universal; roulette add-on is a single extra concept.
+- **Constant player interaction** — items target other players, turns are visible to the table, nobody tunes out.
+- **Short matches** — under 15 minutes per match, so players naturally ask for a rematch.
+
+## 3. Success Metric (validate before adding scope)
+
+The ONLY thing this prototype needs to prove: **players feel clever moments (not just pure chance), and ask for a rematch.**
+
+Do not add new items, cosmetics, or systems until this is validated with real playtesters. This spec deliberately stays scoped to the MVP loop.
+
+---
+
+## 4. Core Rules
+
+### 4.1 Setup
+- 4 players per match (prototype fixed count).
+- Standard 52-card deck, single deck, reshuffled each round.
+- Each player starts with 0 items in inventory (capacity 3).
+
+### 4.2 Round Flow
+1. **Deal:** Two cards to each player, two to the dealer (one dealer card face-down/hidden from players).
+2. **Player turns (sequential, visible to all):** each player chooses one of:
+   - **Hit** — draw a card.
+   - **Stand** — lock in current hand.
+   - **Use item** — spend one inventory item (does not end the turn unless the item implies it — see §4.5).
+   A player may use an item and then still hit/stand in the same turn, EXCEPT items that explicitly consume the full turn.
+3. **Dealer resolves:** reveal hidden card, dealer draws per standard blackjack dealer rules (hit until 17+).
+4. **Scoring & ranking:** all players' hands are scored (standard blackjack values, bust = lowest possible rank). Rank all 4 players highest to lowest.
+   - **Tie-breaker:** fewer cards in hand wins the tie.
+5. **Rewards & risk:**
+   - Top finisher receives **one random item** (if inventory not full; if full, item is forfeit — do not auto-discard another item).
+   - Lowest finisher faces **Roulette Check** (§4.3).
+6. **Next round** begins immediately unless only one player remains (see §4.4).
+
+### 4.3 Roulette Check
+- A 6-chamber revolver, **one chamber loaded**, re-randomized fresh every check (i.e., not a persistent shared cylinder across rounds — each check is an independent 1-in-6 unless an item modifies it).
+- Resolve: loaded → player is **eliminated** (permanent for the match). Empty → player continues to next round.
+- This is the core tension beat — treat it as a first-class animated/dramatized moment in the UI, not a silent dice roll.
+
+### 4.4 End Game
+- Elimination is **permanent** for the match — no respawns.
+- Match ends when **one player remains** — that player is the winner.
+- Show a **Victory Screen** with a restart option that resets to a fresh 4-player lobby.
+
+### 4.5 Items (5 prototype items, hold up to 3)
+
+| Item | Effect | Turn cost |
+|---|---|---|
+| **Peek** | Preview the result of the next roulette check (yours or a targeted player's — pick one at implementation time, default: your own next check) | Does not consume the turn |
+| **Force Hit** | Force a target player to draw a card on their next turn | Does not consume the turn |
+| **Card Swap** | Trade one of your cards with one card of a target player | Does not consume the turn |
+| **Shield** | Block the result of one roulette check entirely (consumed automatically when it would trigger, no manual activation needed at resolution time) | N/A (passive once held, consumed on use) |
+| **Redraw** | Discard one of your cards and draw a replacement | Does not consume the turn |
+
+Design intent: no item should feel mandatory every turn — the choice to **save vs. burn** an item is itself the core decision the pillars call for. Do not let any item bypass the hit/stand decision entirely; items augment, they don't replace, the blackjack decision.
+
+---
+
+## 5. Data Model
+
+```ts
+type Suit = "clubs" | "diamonds" | "hearts" | "spades";
+type Rank = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K";
+
+interface Card {
+  id: string;       // unique per dealt instance, e.g. "AS-1"
+  suit: Suit;
+  rank: Rank;
+  faceUp: boolean;
+}
+
+type ItemType = "peek" | "forceHit" | "cardSwap" | "shield" | "redraw";
+
+interface Item {
+  id: string;
+  type: ItemType;
+}
+
+interface PlayerState {
+  id: string;
+  name: string;
+  hand: Card[];
+  inventory: Item[];       // max length 3
+  status: "active" | "eliminated";
+  standing: boolean;       // has this player stood this round
+  shieldPending: boolean;  // convenience flag if a shield is held (derivable from inventory too)
+}
+
+interface DealerState {
+  hand: Card[];
+}
+
+type RoundPhase =
+  | "dealing"
+  | "playerTurns"
+  | "dealerResolve"
+  | "scoring"
+  | "rouletteCheck"
+  | "roundEnd"
+  | "matchEnd";
+
+interface RoundState {
+  roundNumber: number;
+  phase: RoundPhase;
+  activePlayerId: string | null;
+  turnOrder: string[];
+  dealer: DealerState;
+  lowestFinisherId: string | null;
+  topFinisherId: string | null;
+}
+
+interface MatchState {
+  matchId: string;
+  players: Record<string, PlayerState>;
+  round: RoundState;
+  winnerId: string | null;
+  createdAt: number;
+}
+```
+
+---
+
+## 6. Technical Stack (recommended)
+
+**Do not use Unreal or Godot for this build** — the game is a synced state machine rendered as UI, not a rendering-heavy real-time simulation. A web-first stack ships the fastest playable prototype and is trivially wrapped into a native app later.
+
+| Layer | Choice | Why |
+|---|---|---|
+| Frontend framework | **React + TypeScript**, bundled with **Vite** | fast dev loop, standard for Cursor-assisted builds |
+| Styling | **Tailwind CSS** | fast iteration on a themed UI, easy to keep the color system consistent |
+| Client state | **Zustand** | lightweight, avoids Redux boilerplate for a state-machine-shaped app |
+| Realtime multiplayer | **Colyseus** (Node.js authoritative server) | purpose-built for room-based turn games, handles state sync, is a natural fit for the `MatchState` shape above |
+| Transport | WebSockets (via Colyseus) | needed for "constant player interaction" pillar — all players see turns live |
+| Optional 3D/animation accents | **React Three Fiber** + `@react-three/drei`, or `@react-three/uikit` if you want the UI itself rendered in the 3D canvas | use ONLY for the roulette chamber spin and card flip/deal animations — see §8 |
+| Deployment | Vercel/Netlify (client) + Fly.io/Render (Colyseus server) | zero-friction to get a shareable link to playtesters |
+| Later: native app | **Capacitor** wrapping the same React build | do this only after the core loop is validated |
+
+### 6.1 Why authoritative server, not peer-to-peer
+Roulette outcomes and card draws must be resolved server-side and revealed to clients — never trust the client to generate its own random outcome, or item effects like "Peek" become exploitable. Colyseus's room simulation loop is the natural home for round resolution logic (§4.2–4.3).
+
+### 6.2 Suggested project structure
+
+```
+blackjack-roulette/
+├── client/                # React + Vite app
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Table/            # main game table view
+│   │   │   ├── PlayerSeat/       # per-player hand + inventory + status
+│   │   │   ├── DealerHand/
+│   │   │   ├── ItemBar/          # inventory + use-item interactions
+│   │   │   ├── RouletteScene/    # dramatized roulette check (R3F canvas)
+│   │   │   ├── VictoryScreen/
+│   │   │   └── Lobby/
+│   │   ├── store/                # zustand store, synced from server state
+│   │   ├── net/                  # colyseus client connection + message handlers
+│   │   └── theme/                # design tokens (see §7)
+├── server/                # Colyseus server
+│   ├── rooms/
+│   │   └── BlackjackRouletteRoom.ts
+│   ├── schema/            # Colyseus state schema mirroring §5 data model
+│   └── logic/
+│       ├── deck.ts
+│       ├── scoring.ts
+│       ├── roulette.ts
+│       └── items.ts
+└── shared/                 # types shared between client and server (the interfaces in §5)
+```
+
+---
+
+## 7. UI / Visual Direction
+
+### 7.1 Mood
+Noir casino tension — closer to a dim back-room card table than a bright mobile-casual game. The palette should make the **roulette moment read as genuinely dangerous** against an otherwise calm blackjack table, so the danger color must be reserved and not used decoratively elsewhere.
+
+### 7.2 Color system (color-theory rationale)
+
+Base: a **near-black, slightly warm charcoal** background (not pure black — pure black flattens depth and reads cheap). Felt-green accent for the "table" identity. A single reserved red for danger/roulette so it never gets diluted.
+
+| Token | Hex | Use |
+|---|---|---|
+| `bg.base` | `#14120F` | app background, warm near-black |
+| `bg.surface` | `#1E1B17` | card/panel surfaces, table felt backing |
+| `felt.primary` | `#0F3D2E` | table felt green (blackjack identity) |
+| `felt.line` | `#1C5B45` | felt highlights/borders |
+| `accent.gold` | `#C9A24B` | items, currency-feeling UI, "you're winning" affordance |
+| `danger.red` | `#B3261E` | **reserved exclusively for roulette/elimination states** — never used for generic errors or unrelated UI |
+| `danger.glow` | `#E5484D` | roulette check animation glow, pulsing during the check |
+| `text.primary` | `#EDE6D6` | main text, warm off-white (not pure white, keeps the noir mood) |
+| `text.muted` | `#A69C89` | secondary text, turn hints |
+| `state.safe` | `#4E9E6B` | "survived roulette" / positive round outcome |
+| `state.eliminated` | `#5C5650` | desaturated, used to grey out an eliminated player's seat |
+
+Rationale: gold and green are analogous-adjacent (both read as "table/wealth"), so they coexist without competing. Red is the sole complementary jolt in the palette — reserving it strictly for danger keeps its impact from wearing out, which matters directly for the "high tension" pillar.
+
+### 7.3 Typography
+- Headings / round announcements: a slab or display serif (e.g. `"Fraunces"` or `"Bricolage Grotesque"`) — gives a "dealer's placard" feel.
+- UI/body text: a clean grotesk (e.g. `"Inter"` or `"IBM Plex Sans"`) for legibility at small sizes on player seats.
+
+### 7.4 Layout
+- Central table view, 4 player seats arranged around an oval felt table, dealer hand at the top-center.
+- Each seat shows: name, hand (face-up cards), running score, item slots (max 3, shown as small icon slots), and a status ring (active turn = gold ring, eliminated = greyed out).
+- Turn order and current phase (`playerTurns`, `dealerResolve`, `rouletteCheck`, etc.) shown as a persistent status strip so players always know what's happening — critical for the "constant interaction" pillar when it's not your turn.
+
+### 7.5 On React Three Fiber / `@react-three/uikit`
+Use these **only for two specific moments**, not for the whole UI — a fully 3D UI adds build time without helping validate the core loop:
+
+1. **Roulette Check scene** — a small R3F canvas rendering a revolver cylinder spin/stop, camera pushed in tight, timed to a few seconds of suspense before resolving. This is the single highest-leverage place to spend animation budget, since it's the emotional peak of the loop.
+2. **Card deal/flip** — simple 3D card flip transform (can also be done in pure CSS 3D transforms via Tailwind/Framer Motion if you want to skip R3F entirely for this one).
+
+If you want the rest of the interface (buttons, panels, item bar) rendered inside the same 3D canvas for visual consistency, `@react-three/uikit` is the right tool — but for a fast prototype, it's reasonable to keep the main table as standard DOM/Tailwind and reserve the 3D canvas strictly for the roulette moment. Recommend starting DOM-first and only pulling the roulette scene into R3F; revisit whole-UI-in-3D only after the core loop is validated.
+
+---
+
+## 8. Networking Contract (Colyseus room events)
+
+### Client → Server messages
+- `join` — `{ name: string }`
+- `hit`
+- `stand`
+- `useItem` — `{ itemId: string, targetPlayerId?: string }`
+- `restartMatch`
+
+### Server → Client (state sync via Colyseus schema, plus explicit events for animation triggers)
+- State diffs of `MatchState` (automatic via Colyseus schema sync)
+- `roundPhaseChanged` — `{ phase: RoundPhase }`
+- `rouletteCheckStarted` — `{ playerId: string }` (client plays the suspense animation on receipt, before resolution)
+- `rouletteCheckResolved` — `{ playerId: string, eliminated: boolean }`
+- `matchEnded` — `{ winnerId: string }`
+
+Keep the roulette check as a two-step event (`Started` → `Resolved` with a client-side delay) rather than a single resolved message, so every client can play the same suspense beat in sync rather than instantly showing the outcome.
+
+---
+
+## 9. MVP Scope Checklist (build in this order)
+
+1. Lobby: 4 players join a room.
+2. Deal + hit/stand loop with correct blackjack scoring, no items yet.
+3. Dealer auto-resolve + ranking + tie-break by card count.
+4. Roulette check on lowest finisher, permanent elimination.
+5. Match end + victory screen + restart.
+6. Item: **Redraw** first (simplest, no targeting).
+7. Item: **Shield** (passive, consumed on roulette trigger).
+8. Item: **Peek**.
+9. Items: **Force Hit**, **Card Swap** (targeting UI needed).
+10. Roulette check animation polish (R3F scene).
+11. Visual pass using the color/typography system in §7.
+
+Do not build past step 5 without playtesting — steps 1–5 alone are enough to test the success metric in §3 with plain "does the swing of ranking + roulette feel tense" before items add complexity.
