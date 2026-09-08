@@ -12,7 +12,10 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/health", (req, res) => {
-  res.json({ status: "healthy", game: "blackjack-roulette" });
+  res.json({
+    status: "healthy",
+    game: "blackjack-roulette"
+  });
 });
 
 const httpServer = http.createServer(app);
@@ -29,3 +32,5 @@ gameServer.define("blackjack_room", BlackjackRouletteRoom);
 httpServer.listen(port, () => {
   console.log(`[Blackjack Roulette Server] authoritative server listening on ws://localhost:${port}`);
 });
+
+export default app;

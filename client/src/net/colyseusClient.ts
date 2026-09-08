@@ -20,7 +20,7 @@ class ColyseusNetworkManager {
       hostUrl ||
       (window.location.hostname === 'localhost'
         ? 'ws://localhost:2567'
-        : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`);
+        : import.meta.env.VITE_COLYSEUS_URL);
 
     try {
       this.client = new Client(wsUrl);
