@@ -416,14 +416,18 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
 
     const phase = this.state.round.phase;
 
-    if (itemType === "shield") {
-      return { ok: true };
-    }
-
-    if (itemType === "peek") {
-      const peekPhases = ["dealing", "playerTurns", "dealerResolve", "scoring"];
-      if (!peekPhases.includes(phase)) {
-        return { ok: false, message: "Too late to peek — the chamber is already locked." };
+    if (itemType === "peek" || itemType === "shield") {
+      const beforeRoulette = ["dealing", "playerTurns", "dealerResolve", "scoring"];
+      if (!beforeRoulette.includes(phase)) {
+        return {
+          ok: false,
+          message: itemType === "shield"
+            ? "Too late to raise a shield — the chamber is already locked."
+            : "Too late to peek — the chamber is already locked."
+        };
+      }
+      if (itemType === "shield" && player.shieldPending) {
+        return { ok: false, message: "A shield is already armed." };
       }
       return { ok: true };
     }
@@ -509,7 +513,6 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
           consumed: true,
           extraData: preview
         };
-        // Send private peek info to requesting client
         const client = this.clients.find(c => c.sessionId === sessionId);
         if (client) {
           client.send("peekResult", {
@@ -519,11 +522,7 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
         break;
       }
       case "shield": {
-        result = {
-          success: true,
-          message: "Shield is passive and protects automatically on roulette hit.",
-          consumed: false
-        };
+        result = ItemManager.handleActivateShield(player);
         break;
       }
     }
@@ -622,6 +621,13 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
     }
 
     // Hold the reveal so everyone can read the hands before the cylinder
+    if (lowestFinisher?.isBot && !lowestFinisher.shieldPending) {
+      const botShield = lowestFinisher.inventory.find(i => i.type === "shield");
+      if (botShield) {
+        this.handleUseItem(lowestFinisher.sessionId, { itemId: botShield.id });
+      }
+    }
+
     this.clock.setTimeout(() => {
       if (lowestFinisher) {
         this.executeRoulettePhase(lowestFinisher);
@@ -634,8 +640,7 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
   private executeRoulettePhase(targetPlayer: PlayerSchema) {
     this.state.round.phase = "rouletteCheck";
 
-    const hasShield =
-      targetPlayer.inventory.some(i => i.type === "shield") || targetPlayer.shieldPending;
+    const hasShield = targetPlayer.shieldPending;
 
     // Step 1: Broadcast Roulette Check Started (Suspense phase for clients to play 3D spin)
     const startedEvent: RouletteCheckStartedEvent = {

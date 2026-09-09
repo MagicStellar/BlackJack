@@ -23,14 +23,8 @@ export class RouletteEngine {
     let isEliminated = false;
 
     if (isBulletHit) {
-      // Check for shield in inventory
-      const shieldIndex = player.inventory.findIndex(item => item.type === "shield");
-      if (shieldIndex !== -1 || player.shieldPending) {
-        // Shield saves the player!
+      if (player.shieldPending) {
         isShieldUsed = true;
-        if (shieldIndex !== -1) {
-          player.inventory.splice(shieldIndex, 1);
-        }
         player.shieldPending = false;
         isEliminated = false;
       } else {
@@ -48,9 +42,6 @@ export class RouletteEngine {
     };
   }
 
-  /**
-   * Peek at next chamber outcome simulation
-   */
   public static previewCheck(): { bulletInChamber: boolean } {
     const bulletChamber = Math.floor(Math.random() * 6) + 1;
     const chamberNumber = Math.floor(Math.random() * 6) + 1;

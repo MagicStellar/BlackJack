@@ -225,7 +225,7 @@ export const LobbyView: React.FC = () => {
                     <span className="font-bold">👁️ Peek:</span> View upcoming chamber danger
                   </div>
                   <div className="p-2 rounded bg-neutral-900 border border-neutral-800 text-emerald-300">
-                    <span className="font-bold">🛡️ Shield:</span> Blocks fatal bullet automatically
+                    <span className="font-bold">🛡️ Shield:</span> Tap to block one fatal bullet
                   </div>
                   <div className="p-2 rounded bg-neutral-900 border border-neutral-800 text-amber-300">
                     <span className="font-bold">🔄 Redraw:</span> Swap 1 card for a new draw

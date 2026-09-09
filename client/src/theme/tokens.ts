@@ -50,7 +50,7 @@ export const ITEM_INFO = {
   },
   shield: {
     name: 'Aegis Shield',
-    description: 'Blocks one fatal roulette bullet automatically if targeted.',
+    description: 'Tap to arm. Blocks one fatal roulette bullet the next time you face the revolver. Usable until the cylinder spins.',
     icon: 'Shield',
     color: 'text-emerald-400 border-emerald-500/40 bg-emerald-950/30',
   },

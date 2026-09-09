@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { PlayerState, Item, Card } from '../../../../shared/types';
+import { PlayerState, Item } from '../../../../shared/types';
 import { net } from '../../net/colyseusClient';
 import { ITEM_INFO } from '../../theme/tokens';
 import {
@@ -42,11 +42,12 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
 
   const isPlayerTurnsPhase = phase === 'playerTurns';
   const canAct = isMyTurn && isPlayerTurnsPhase && !myPlayer.standing && !myPlayer.isBusted;
-  const canPeek = ['dealing', 'playerTurns', 'dealerResolve', 'scoring'].includes(phase);
+  const canUseBeforeRoulette = ['dealing', 'playerTurns', 'dealerResolve', 'scoring'].includes(phase);
+  const canShield = canUseBeforeRoulette && !myPlayer.shieldPending;
 
   const canUseItem = (type: string) => {
-    if (type === 'shield') return false;
-    if (type === 'peek') return canPeek;
+    if (type === 'shield') return canShield;
+    if (type === 'peek') return canUseBeforeRoulette;
     return canAct;
   };
 
@@ -63,13 +64,9 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
   };
 
   const handleItemClick = (item: Item) => {
-    if (item.type === 'shield') {
-      return;
-    }
-
     if (!canUseItem(item.type)) return;
 
-    if (item.type === 'peek') {
+    if (item.type === 'peek' || item.type === 'shield') {
       net.useItem({ itemId: item.id });
       return;
     }
@@ -145,23 +142,20 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
               const item = myPlayer.inventory[slotIdx];
               if (item) {
                 const info = (ITEM_INFO as any)[item.type] || { name: item.type, description: '' };
-                const isPassive = item.type === 'shield';
                 const usable = canUseItem(item.type);
                 const waitHint =
-                  item.type === 'peek'
+                  item.type === 'peek' || item.type === 'shield'
                     ? 'Usable until the cylinder spins'
                     : 'Only on your turn';
                 return (
                   <button
                     key={item.id || slotIdx}
                     onClick={() => handleItemClick(item)}
-                    disabled={isPassive || !usable}
+                    disabled={!usable}
                     className={`relative flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all duration-200 group ${
-                      isPassive
-                        ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300 cursor-default'
-                        : usable
-                          ? 'bg-neutral-900/90 border-accent-gold/40 hover:border-accent-gold hover:bg-neutral-800 shadow-md active:scale-95'
-                          : 'bg-neutral-900/50 border-neutral-800 text-neutral-500 cursor-not-allowed opacity-60'
+                      usable
+                        ? 'bg-neutral-900/90 border-accent-gold/40 hover:border-accent-gold hover:bg-neutral-800 shadow-md active:scale-95'
+                        : 'bg-neutral-900/50 border-neutral-800 text-neutral-500 cursor-not-allowed opacity-60'
                     }`}
                   >
                     {getItemIcon(item.type)}
@@ -170,7 +164,7 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
                         {info.name}
                       </span>
                       <span className="text-[9px] text-text-muted hidden lg:inline">
-                        {isPassive ? 'Passive' : usable ? 'Use' : waitHint}
+                        {usable ? 'Use' : waitHint}
                       </span>
                     </div>
 
@@ -178,7 +172,7 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
                       <div className="font-bold text-accent-gold">{info.name}</div>
                       <div className="text-text-muted mt-0.5">{info.description}</div>
                       <div className="text-accent-gold/80 mt-1 text-[10px]">
-                        {isPassive ? 'Fires automatically on a loaded chamber' : waitHint}
+                        {waitHint}
                       </div>
                     </div>
                   </button>

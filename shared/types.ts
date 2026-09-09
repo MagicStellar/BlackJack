@@ -23,7 +23,7 @@ export interface PlayerState {
   inventory: Item[]; // max length 3
   status: "active" | "eliminated";
   standing: boolean; // has this player stood this round
-  shieldPending: boolean; // convenience flag if a shield is held
+  shieldPending: boolean; // true after the player taps Shield, until it blocks a bullet
   forcedHit: boolean; // whether player is forced to hit on next turn
   isBot?: boolean;
   score?: number;

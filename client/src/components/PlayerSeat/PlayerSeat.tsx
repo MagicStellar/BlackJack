@@ -89,7 +89,7 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   const statusIcons = (
     <>
       {player.shieldPending && !isEliminated && (
-        <span className="shrink-0 text-emerald-400" title="Aegis Shield active">
+        <span className="shrink-0 text-emerald-400" title="Aegis Shield armed">
           <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
         </span>
       )}

@@ -44,7 +44,7 @@ export const QuickstartGuide: React.FC<QuickstartGuideProps> = ({ onClose }) => 
               <Shield className="w-4 h-4" /> Items
             </h3>
             <p className="text-[13px] text-text-muted leading-relaxed">
-              Peek checks the next chamber, Shield auto-blocks a bullet, Redraw replaces one of your cards, Swap trades a card with an opponent, and Force Hit makes them draw — Peek anytime before the gun; the rest only on your turn; Shield is passive.
+              Peek checks the next chamber, Shield must be tapped to block one bullet, Redraw replaces one of your cards, Swap trades a card with an opponent, and Force Hit makes them draw — Peek and Shield anytime before the gun; the rest only on your turn.
             </p>
           </section>
         </div>

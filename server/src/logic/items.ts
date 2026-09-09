@@ -32,9 +32,6 @@ export class ItemManager {
     const itemType = getRandomItemType();
     const item = createItem(itemType);
     player.inventory.push(item);
-    if (itemType === "shield") {
-      player.shieldPending = true;
-    }
     return item;
   }
 
@@ -105,6 +102,18 @@ export class ItemManager {
     return {
       success: true,
       message: `${targetPlayer.name} is forced to hit on their next turn!`,
+      consumed: true
+    };
+  }
+
+  public static handleActivateShield(player: PlayerSchema): ItemActionResult {
+    if (player.shieldPending) {
+      return { success: false, message: "A shield is already armed.", consumed: false };
+    }
+    player.shieldPending = true;
+    return {
+      success: true,
+      message: `${player.name} armed their Aegis Shield!`,
       consumed: true
     };
   }
