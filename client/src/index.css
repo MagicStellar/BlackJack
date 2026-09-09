@@ -10,12 +10,43 @@
   }
 }
 
-/* Custom Casino Felt Texture and Vignette */
+/* ── Casino oval table ── */
+.table-felt-oval {
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 42%, rgba(38, 122, 93, 0.35) 0%, transparent 58%),
+    radial-gradient(ellipse at 50% 45%, #165c44 0%, #0F3D2E 42%, #08241B 78%, #04110c 100%);
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.55), inset 0 0 160px rgba(0, 0, 0, 0.4);
+}
+
+.table-wood-rim-oval {
+  background: linear-gradient(145deg, #7a5530 0%, #4a321c 28%, #2e1e12 62%, #1a120a 100%);
+  box-shadow:
+    0 22px 55px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.dot-grid-bg {
+  background-color: #161410;
+  background-image: radial-gradient(rgba(237, 230, 214, 0.09) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ── Traditional Semi-circular Blackjack Table ── */
+.table-felt-semi {
+  background: radial-gradient(ellipse 120% 100% at 50% 0%, #134e3b 0%, #0F3D2E 35%, #08241B 70%, #05140f 100%);
+  box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.85), 0 20px 50px rgba(0, 0, 0, 0.9);
+}
+
+.table-wood-rim-semi {
+  background: linear-gradient(145deg, #2b1f14, #19120b, #382717, #150f08);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.8);
+}
+
+/* Legacy circular felt (kept for compatibility) */
 .table-felt {
   background: radial-gradient(ellipse at center, #134e3b 0%, #0F3D2E 45%, #08241B 85%, #05140f 100%);
-  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.9), 0 30px 60px rgba(0, 0, 0, 0.95);
-  border: 12px solid #1e1812;
-  outline: 4px solid #36291a;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.9);
 }
 
 .table-wood-rim {
@@ -62,6 +93,16 @@
 .roulette-danger-glow {
   box-shadow: 0 0 50px rgba(229, 72, 77, 0.7), inset 0 0 30px rgba(179, 38, 30, 0.5);
   animation: pulseGlow 1.2s infinite ease-in-out;
+}
+
+/* Active player seat glow */
+.seat-active-glow {
+  box-shadow: 0 0 20px rgba(201, 162, 75, 0.35), 0 0 40px rgba(201, 162, 75, 0.15);
+}
+
+/* Felt edge line for table */
+.felt-edge-line {
+  border-color: rgba(28, 91, 69, 0.35);
 }
 
 /* Custom Scrollbars */

@@ -13,6 +13,7 @@ import {
 } from "../../../shared/types";
 
 const BOT_NAMES = ["Victor 'Viper'", "Elena Frost", "The Gambler", "Baron Kane"];
+const TURN_DURATION_SEC = 30;
 
 export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
   maxClients = 4;
@@ -165,9 +166,11 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
   }
 
   private startRound() {
+    this.clearTurnTimers();
     this.deck.resetAndShuffle();
 
     this.state.round.phase = "dealing";
+    this.state.round.turnExpiresAt = 0;
     this.state.round.lowestFinisherId = "";
     this.state.round.topFinisherId = "";
     this.state.round.awardedItemType = "";
@@ -231,7 +234,50 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
     this.state.round.dealer.isBusted = dealerScore.isBusted;
   }
 
+  private clearTurnTimers() {
+    if (this.turnTimeout) {
+      this.turnTimeout.clear();
+      this.turnTimeout = undefined;
+    }
+    if (this.botTimer) {
+      this.botTimer.clear();
+      this.botTimer = undefined;
+    }
+  }
+
+  private startTurnTimer(player: PlayerSchema) {
+    this.clearTurnTimers();
+
+    const duration = TURN_DURATION_SEC;
+    this.state.round.turnDuration = duration;
+    this.state.round.turnExpiresAt = Date.now() + duration * 1000;
+
+    this.turnTimeout = this.clock.setTimeout(() => {
+      this.handleTurnTimeout(player.id);
+    }, duration * 1000);
+  }
+
+  private handleTurnTimeout(playerId: string) {
+    if (this.state.round.phase !== "playerTurns" || this.state.round.activePlayerId !== playerId) {
+      return;
+    }
+
+    const player = this.getActivePlayer();
+    if (!player || player.id !== playerId || player.standing) {
+      return;
+    }
+
+    this.sendNotification(
+      "warning",
+      "Time Expired",
+      `${player.name} ran out of time and automatically stood.`
+    );
+    this.handlePlayerStand(player.sessionId);
+  }
+
   private checkActivePlayerTurn() {
+    this.clearTurnTimers();
+
     const activePlayer = this.getActivePlayer();
     if (!activePlayer) {
       this.startDealerResolve();
@@ -247,6 +293,9 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
       }, 1000);
       return;
     }
+
+    // Start turn timer for active player (AFK protection)
+    this.startTurnTimer(activePlayer);
 
     // Bot AI turn logic
     if (activePlayer.isBot) {
@@ -321,6 +370,8 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
       return;
     }
 
+    this.clearTurnTimers();
+
     const card = this.deck.drawCard(true);
     player.hand.push(card);
     this.updateScores();
@@ -337,6 +388,9 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
     } else if (player.isBot) {
       // Re-evaluate next bot action
       this.clock.setTimeout(() => this.checkActivePlayerTurn(), 1000);
+    } else {
+      // Reset timer for human player's next choice
+      this.startTurnTimer(player);
     }
   }
 
@@ -347,6 +401,8 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
     if (!player || player.id !== this.state.round.activePlayerId) {
       return;
     }
+
+    this.clearTurnTimers();
 
     player.standing = true;
     this.sendNotification("info", "Stand", `${player.name} stands with ${player.score}.`);
@@ -438,6 +494,7 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
   }
 
   private advanceToNextPlayer() {
+    this.clearTurnTimers();
     const currentIndex = this.state.round.turnOrder.indexOf(this.state.round.activePlayerId || "");
     const nextIndex = currentIndex + 1;
 
@@ -447,11 +504,14 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
     } else {
       // All players took turn -> Dealer Resolve
       this.state.round.activePlayerId = "";
+      this.state.round.turnExpiresAt = 0;
       this.startDealerResolve();
     }
   }
 
   private startDealerResolve() {
+    this.clearTurnTimers();
+    this.state.round.turnExpiresAt = 0;
     this.state.round.phase = "dealerResolve";
 
     // Reveal dealer's hole card

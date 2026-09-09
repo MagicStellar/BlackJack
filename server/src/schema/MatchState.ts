@@ -43,6 +43,8 @@ export class RoundSchema extends Schema {
   @type("string") topFinisherId: string = "";
   @type("string") awardedItemType: string = "";
   @type("string") awardedPlayerId: string = "";
+  @type("number") turnExpiresAt: number = 0;
+  @type("number") turnDuration: number = 30;
 }
 
 export class MatchStateSchema extends Schema {

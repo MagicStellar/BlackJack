@@ -62,6 +62,8 @@ export interface RoundState {
     playerId: string;
     bulletInChamber: boolean;
   } | null;
+  turnExpiresAt?: number;
+  turnDuration?: number;
 }
 
 export interface MatchState {

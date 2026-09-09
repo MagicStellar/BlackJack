@@ -11,8 +11,10 @@ import {
   Repeat,
   ArrowDownCircle,
   HelpCircle,
-  X
+  X,
+  Clock
 } from 'lucide-react';
+import { useTurnCountdown } from '../../store/useTurnCountdown';
 
 interface ItemControlsProps {
   myPlayer: PlayerState | undefined;
@@ -31,6 +33,7 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
   const [targetPlayerId, setTargetPlayerId] = useState<string>('');
   const [myCardId, setMyCardId] = useState<string>('');
   const [targetCardId, setTargetCardId] = useState<string>('');
+  const { timeLeft, isUrgent } = useTurnCountdown();
 
   if (!myPlayer || myPlayer.status === 'eliminated') {
     return null;
@@ -116,16 +119,16 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
   );
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-2">
+    <div className="w-full max-w-5xl mx-auto px-2 sm:px-4 py-2">
       {/* Bottom Floating Action Bar */}
-      <div className="bg-bg-surface/95 border border-neutral-800 backdrop-blur-md rounded-2xl p-3 sm:p-4 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
         {/* Inventory Section */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start">
-          <span className="text-xs uppercase tracking-widest text-text-muted font-serif hidden sm:inline">
-            Inventory ({myPlayer.inventory.length}/3):
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <span className="text-[10px] sm:text-xs uppercase tracking-widest text-text-muted font-serif hidden md:inline">
+            Items:
           </span>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {[0, 1, 2].map((slotIdx) => {
               const item = myPlayer.inventory[slotIdx];
               if (item) {
@@ -135,24 +138,24 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
                   <button
                     key={item.id || slotIdx}
                     onClick={() => handleItemClick(item)}
-                    className={`relative flex items-center gap-2 px-3 py-2 rounded-xl border transition-all duration-200 group ${
+                    className={`relative flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all duration-200 group ${
                       isPassive
                         ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300 cursor-default'
                         : 'bg-neutral-900/90 border-accent-gold/40 hover:border-accent-gold hover:bg-neutral-800 shadow-md active:scale-95'
                     }`}
                   >
                     {getItemIcon(item.type)}
-                    <div className="flex flex-col text-left">
+                    <div className="flex flex-col text-left hidden sm:flex">
                       <span className="text-xs font-semibold text-text-primary capitalize">
                         {info.name}
                       </span>
-                      <span className="text-[10px] text-text-muted hidden sm:inline">
-                        {isPassive ? 'Passive Protection' : 'Use Item'}
+                      <span className="text-[9px] text-text-muted hidden lg:inline">
+                        {isPassive ? 'Passive' : 'Use'}
                       </span>
                     </div>
 
                     {/* Tooltip Hover */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 rounded-lg bg-bg-base border border-accent-gold/50 text-[11px] text-text-primary opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-xl">
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 sm:w-48 p-2 rounded-lg bg-bg-base border border-accent-gold/50 text-[11px] text-text-primary opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-xl">
                       <div className="font-bold text-accent-gold">{info.name}</div>
                       <div className="text-text-muted mt-0.5">{info.description}</div>
                     </div>
@@ -162,9 +165,9 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
               return (
                 <div
                   key={slotIdx}
-                  className="w-12 h-12 rounded-xl border border-dashed border-neutral-800 bg-black/30 flex items-center justify-center text-neutral-700 text-xs"
+                  className="w-8 h-8 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl border border-dashed border-neutral-800 bg-black/30 flex items-center justify-center text-neutral-600 text-[10px]"
                 >
-                  Empty
+                  —
                 </div>
               );
             })}
@@ -172,32 +175,55 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
         </div>
 
         {/* Turn Action Buttons: HIT & STAND */}
-        <div className="flex items-center gap-3 w-full md:w-auto justify-center">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-center">
+          {canAct && timeLeft > 0 && (
+            <div
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg sm:rounded-xl border font-mono font-bold text-xs transition-all ${
+                isUrgent
+                  ? 'bg-danger-red/25 border-danger-red text-danger-glow animate-pulse shadow-[0_0_12px_rgba(229,72,77,0.5)]'
+                  : 'bg-neutral-900 border-accent-gold/40 text-accent-gold shadow-sm'
+              }`}
+              title="Time left to choose an action"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span>{timeLeft}s</span>
+            </div>
+          )}
+
           <button
             onClick={handleHit}
             disabled={!canAct}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-serif text-base font-bold uppercase tracking-wider transition-all duration-200 shadow-lg ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-serif text-xs sm:text-base font-bold uppercase tracking-wider transition-all duration-200 shadow-lg ${
               canAct
                 ? 'bg-gradient-to-r from-accent-gold to-accent-goldDark text-neutral-950 hover:brightness-110 active:scale-95 ring-2 ring-accent-goldLight/40'
                 : 'bg-neutral-800/80 text-neutral-600 border border-neutral-800 cursor-not-allowed'
             }`}
           >
-            <Hand className="w-5 h-5" />
+            <Hand className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             Hit
           </button>
 
           <button
             onClick={handleStand}
             disabled={!canAct}
-            className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-serif text-base font-bold uppercase tracking-wider transition-all duration-200 shadow-lg ${
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl font-serif text-xs sm:text-base font-bold uppercase tracking-wider transition-all duration-200 shadow-lg ${
               canAct
                 ? 'bg-neutral-800 text-accent-gold border border-accent-gold/60 hover:bg-neutral-700 active:scale-95'
                 : 'bg-neutral-900 text-neutral-600 border border-neutral-800 cursor-not-allowed'
             }`}
           >
-            <CheckCircle className="w-5 h-5" />
+            <CheckCircle className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
             Stand
           </button>
+        </div>
+
+        <div className="hidden sm:flex flex-col items-end shrink-0 px-3 py-1.5 rounded-xl bg-neutral-900/80 border border-neutral-800 min-w-[108px]">
+          <span className="text-[8px] uppercase tracking-[0.18em] text-text-muted font-semibold">Your Hand</span>
+          <span className={`font-serif font-bold text-lg leading-tight ${
+            myPlayer.isBusted ? 'text-danger-glow' : 'text-accent-gold'
+          }`}>
+            {myPlayer.hand.length === 0 ? '—' : myPlayer.isBusted ? 'BUST' : (myPlayer.score ?? '—')}
+          </span>
         </div>
       </div>
 

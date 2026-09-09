@@ -174,17 +174,6 @@ Client (React/Zustand) ←──WebSocket──→ Colyseus Server (Node.js)
 
 ---
 
-## 🛣️ Roadmap
-
-- [ ] Persistent match history & leaderboard
-- [ ] Custom player names & avatars
-- [ ] Room codes for private lobbies
-- [ ] Mobile layout optimisation
-- [ ] Sound pack selector (noir / cyberpunk / western)
-- [ ] Spectator mode
-- [ ] Capacitor wrapper for native iOS/Android app
-
----
 
 ## 📄 License
 

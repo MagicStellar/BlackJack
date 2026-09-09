@@ -33,6 +33,8 @@ interface GameStoreState {
   lowestFinisherId: string | null;
   topFinisherId: string | null;
   winnerId: string | null;
+  turnExpiresAt: number;
+  turnDuration: number;
 
   // Roulette dramatic scene state
   rouletteActive: boolean;
@@ -83,6 +85,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
   lowestFinisherId: null,
   topFinisherId: null,
   winnerId: null,
+  turnExpiresAt: 0,
+  turnDuration: 30,
 
   rouletteActive: false,
   rouletteTargetPlayer: null,
@@ -183,6 +187,8 @@ export const useGameStore = create<GameStoreState>((set, get) => ({
       lowestFinisherId: schemaState.round?.lowestFinisherId || null,
       topFinisherId: schemaState.round?.topFinisherId || null,
       winnerId: schemaState.winnerId || null,
+      turnExpiresAt: schemaState.round?.turnExpiresAt || 0,
+      turnDuration: schemaState.round?.turnDuration || 30,
     });
   },
 
