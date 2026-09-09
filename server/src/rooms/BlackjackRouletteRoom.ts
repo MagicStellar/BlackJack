@@ -409,6 +409,41 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
     this.advanceToNextPlayer();
   }
 
+  private canUseItemNow(player: PlayerSchema, itemType: string): { ok: boolean; message?: string } {
+    if (player.status !== "active") {
+      return { ok: false, message: "Eliminated players cannot use items." };
+    }
+
+    const phase = this.state.round.phase;
+
+    if (itemType === "shield") {
+      return { ok: true };
+    }
+
+    if (itemType === "peek") {
+      const peekPhases = ["dealing", "playerTurns", "dealerResolve", "scoring"];
+      if (!peekPhases.includes(phase)) {
+        return { ok: false, message: "Too late to peek — the chamber is already locked." };
+      }
+      return { ok: true };
+    }
+
+    // redraw, forceHit, cardSwap — only on your active blackjack turn
+    if (phase !== "playerTurns") {
+      return { ok: false, message: "Card items can only be used during player turns." };
+    }
+    if (player.id !== this.state.round.activePlayerId) {
+      return { ok: false, message: "Wait for your turn to use that item." };
+    }
+    if (player.standing) {
+      return { ok: false, message: "You already stood this round." };
+    }
+    if (player.isBusted) {
+      return { ok: false, message: "Busted — card items are locked." };
+    }
+    return { ok: true };
+  }
+
   private handleUseItem(sessionId: string, payload: UseItemPayload) {
     const player = this.state.players.get(sessionId);
     if (!player || player.status !== "active") return;
@@ -418,6 +453,12 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
 
     const item = player.inventory[itemIndex];
     if (!item) return;
+
+    const gate = this.canUseItemNow(player, item.type);
+    if (!gate.ok) {
+      this.sendNotification("warning", "Item Locked", gate.message || "You cannot use that item now.");
+      return;
+    }
 
     let result: ItemActionResult = { success: false, message: "", consumed: false };
 
@@ -580,14 +621,14 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
       }
     }
 
-    // Proceed to Roulette Check for lowest finisher
+    // Hold the reveal so everyone can read the hands before the cylinder
     this.clock.setTimeout(() => {
       if (lowestFinisher) {
         this.executeRoulettePhase(lowestFinisher);
       } else {
         this.startNextRound();
       }
-    }, 2500);
+    }, 7000);
   }
 
   private executeRoulettePhase(targetPlayer: PlayerSchema) {
@@ -607,7 +648,7 @@ export class BlackjackRouletteRoom extends Room<MatchStateSchema> {
     this.sendNotification(
       "danger",
       "Roulette Chamber Locked",
-      `${targetPlayer.name} placed lowest and pulls the trigger...`
+      `${targetPlayer.name} is facing the revolver`
     );
 
     // Step 2: Suspense delay (3.8s) before resolving outcome

@@ -32,19 +32,19 @@ export const TOKENS = {
 export const ITEM_INFO = {
   peek: {
     name: 'Chamber Peek',
-    description: 'Inspect the upcoming roulette chamber to see if danger lurks.',
+    description: 'Inspect the upcoming roulette chamber before it spins. Usable any time until the revolver check.',
     icon: 'Eye',
     color: 'text-cyan-400 border-cyan-500/40 bg-cyan-950/30',
   },
   forceHit: {
     name: 'Force Hit',
-    description: 'Compel an opponent to draw an extra card on their next turn.',
+    description: 'Compel an opponent to draw an extra card on their next turn. Your turn only.',
     icon: 'ArrowDownCircle',
     color: 'text-amber-400 border-amber-500/40 bg-amber-950/30',
   },
   cardSwap: {
     name: 'Card Swap',
-    description: 'Trade one of your cards with an opponent to hijack their hand.',
+    description: 'Trade one of your cards with an opponent. Your turn only, before you stand or bust.',
     icon: 'Repeat',
     color: 'text-purple-400 border-purple-500/40 bg-purple-950/30',
   },
@@ -56,7 +56,7 @@ export const ITEM_INFO = {
   },
   redraw: {
     name: 'Redraw',
-    description: 'Discard one card from your hand and draw a fresh replacement.',
+    description: 'Discard one card from your hand and draw a replacement. Your turn only, before you stand or bust.',
     icon: 'RefreshCw',
     color: 'text-amber-300 border-amber-500/40 bg-amber-950/30',
   },

@@ -92,7 +92,7 @@ const TableFelt: React.FC<TableFeltProps> = ({
                 <div key={player?.id ?? `open-${i}`} className="flex justify-center min-w-0">
                   {player ? (
                     <div
-                      className={`w-full max-w-[240px] rounded-2xl px-2 py-2.5 sm:px-3 sm:py-3 flex items-center justify-center overflow-visible transition-shadow duration-300 ${
+                      className={`w-full max-w-[280px] rounded-2xl px-2 py-3 sm:px-3 sm:py-3.5 flex items-center justify-center overflow-visible transition-shadow duration-300 ${
                         isActive
                           ? 'border-2 border-accent-gold bg-accent-gold/10 shadow-gold-glow'
                           : 'border border-white/10 bg-black/20'

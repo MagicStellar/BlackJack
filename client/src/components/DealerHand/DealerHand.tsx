@@ -58,9 +58,9 @@ export const DealerHand: React.FC<DealerHandProps> = ({ cards, score, isBusted, 
         )}
       </div>
 
-      <div className="flex items-center justify-center overflow-visible min-h-[80px] sm:min-h-[92px] py-2">
+      <div className="flex items-center justify-center overflow-visible min-h-[92px] sm:min-h-[104px] py-2">
         {cards.length === 0 ? (
-          <div className="w-[3.4rem] sm:w-14 aspect-[5/7] rounded-lg border-2 border-dashed border-felt-line/40 flex items-center justify-center text-felt-line/50 text-[10px] font-mono">
+          <div className="w-14 sm:w-16 aspect-[5/7] rounded-lg border-2 border-dashed border-felt-line/40 flex items-center justify-center text-felt-line/50 text-[10px] font-mono">
             Shoe
           </div>
         ) : (

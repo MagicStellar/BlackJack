@@ -40,15 +40,15 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
   }, [card.faceUp, shownFaceUp]);
 
   const widthClass = compact
-    ? 'w-[3.4rem] sm:w-14'
+    ? 'w-14 sm:w-16'
     : 'w-16 sm:w-[4.5rem]';
   const rankClass = compact
-    ? 'text-[11px] sm:text-xs font-bold font-serif leading-none'
+    ? 'text-[10px] sm:text-[11px] font-bold font-serif leading-none'
     : 'text-sm font-bold font-serif leading-none';
   const pipClass = compact
-    ? 'text-[9px] sm:text-[10px] leading-none'
+    ? 'text-[8px] sm:text-[9px] leading-none'
     : 'text-xs leading-none';
-  const centerClass = compact ? 'text-xl' : 'text-2xl';
+  const centerClass = compact ? 'text-lg sm:text-xl' : 'text-2xl';
 
   return (
     <div
@@ -63,7 +63,9 @@ export const PlayingCard: React.FC<PlayingCardProps> = ({
         style={{ transform: tilting ? 'rotateY(90deg)' : 'rotateY(0deg)' }}
       >
         {shownFaceUp ? (
-          <div className="w-full h-full rounded-md sm:rounded-lg bg-gradient-to-br from-[#FDFBF7] to-[#EDE6D6] border border-neutral-300 px-1.5 py-1.5 sm:px-2 sm:py-2 flex flex-col justify-between shadow-card box-border">
+          <div className={`w-full h-full rounded-md sm:rounded-lg bg-gradient-to-br from-[#FDFBF7] to-[#EDE6D6] border border-neutral-300 flex flex-col justify-between shadow-card box-border ${
+            compact ? 'px-1 py-1' : 'px-1.5 py-1.5 sm:px-2 sm:py-2'
+          }`}>
             <div className="flex flex-col items-start gap-0 leading-none">
               <span className={`${rankClass} ${suitInfo.color}`}>{card.rank}</span>
               <span className={`${pipClass} ${suitInfo.color}`}>{suitInfo.symbol}</span>

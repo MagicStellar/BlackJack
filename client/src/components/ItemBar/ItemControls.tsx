@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PlayerState, Item, Card } from '../../../../shared/types';
 import { net } from '../../net/colyseusClient';
 import { ITEM_INFO } from '../../theme/tokens';
@@ -41,6 +42,17 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
 
   const isPlayerTurnsPhase = phase === 'playerTurns';
   const canAct = isMyTurn && isPlayerTurnsPhase && !myPlayer.standing && !myPlayer.isBusted;
+  const canPeek = ['dealing', 'playerTurns', 'dealerResolve', 'scoring'].includes(phase);
+
+  const canUseItem = (type: string) => {
+    if (type === 'shield') return false;
+    if (type === 'peek') return canPeek;
+    return canAct;
+  };
+
+  useEffect(() => {
+    if (!canAct) setSelectedItem(null);
+  }, [canAct]);
 
   const handleHit = () => {
     if (canAct) net.hit();
@@ -52,9 +64,10 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
 
   const handleItemClick = (item: Item) => {
     if (item.type === 'shield') {
-      // Shield is passive
       return;
     }
+
+    if (!canUseItem(item.type)) return;
 
     if (item.type === 'peek') {
       net.useItem({ itemId: item.id });
@@ -62,7 +75,6 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
     }
 
     if (item.type === 'redraw') {
-      // If 1 or 2 cards, redraw default or open simple card picker
       if (myPlayer.hand.length > 0) {
         net.useItem({ itemId: item.id, sourceCardId: myPlayer.hand[myPlayer.hand.length - 1].id });
       }
@@ -80,7 +92,7 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
   };
 
   const executeTargetedItem = () => {
-    if (!selectedItem) return;
+    if (!selectedItem || !canAct) return;
 
     if (selectedItem.type === 'forceHit') {
       net.useItem({
@@ -134,14 +146,22 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
               if (item) {
                 const info = (ITEM_INFO as any)[item.type] || { name: item.type, description: '' };
                 const isPassive = item.type === 'shield';
+                const usable = canUseItem(item.type);
+                const waitHint =
+                  item.type === 'peek'
+                    ? 'Usable until the cylinder spins'
+                    : 'Only on your turn';
                 return (
                   <button
                     key={item.id || slotIdx}
                     onClick={() => handleItemClick(item)}
+                    disabled={isPassive || !usable}
                     className={`relative flex items-center gap-1 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all duration-200 group ${
                       isPassive
                         ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300 cursor-default'
-                        : 'bg-neutral-900/90 border-accent-gold/40 hover:border-accent-gold hover:bg-neutral-800 shadow-md active:scale-95'
+                        : usable
+                          ? 'bg-neutral-900/90 border-accent-gold/40 hover:border-accent-gold hover:bg-neutral-800 shadow-md active:scale-95'
+                          : 'bg-neutral-900/50 border-neutral-800 text-neutral-500 cursor-not-allowed opacity-60'
                     }`}
                   >
                     {getItemIcon(item.type)}
@@ -150,14 +170,16 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
                         {info.name}
                       </span>
                       <span className="text-[9px] text-text-muted hidden lg:inline">
-                        {isPassive ? 'Passive' : 'Use'}
+                        {isPassive ? 'Passive' : usable ? 'Use' : waitHint}
                       </span>
                     </div>
 
-                    {/* Tooltip Hover */}
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 sm:w-48 p-2 rounded-lg bg-bg-base border border-accent-gold/50 text-[11px] text-text-primary opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 shadow-xl">
                       <div className="font-bold text-accent-gold">{info.name}</div>
                       <div className="text-text-muted mt-0.5">{info.description}</div>
+                      <div className="text-accent-gold/80 mt-1 text-[10px]">
+                        {isPassive ? 'Fires automatically on a loaded chamber' : waitHint}
+                      </div>
                     </div>
                   </button>
                 );
@@ -227,9 +249,9 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
         </div>
       </div>
 
-      {/* Item Targeting Modal */}
-      {selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+      {/* Portal to body so backdrop-blur on the footer can't trap `fixed` */}
+      {selectedItem && createPortal(
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
           <div className="relative w-full max-w-md bg-bg-surface border border-accent-gold/60 rounded-2xl p-6 shadow-gold-glow">
             <button
               onClick={() => setSelectedItem(null)}
@@ -248,7 +270,6 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
               </div>
             </div>
 
-            {/* Target Player Selector */}
             <div className="space-y-2 mb-4">
               <label className="text-xs uppercase tracking-wider text-text-muted font-semibold">
                 Select Target Opponent:
@@ -271,7 +292,6 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
               </div>
             </div>
 
-            {/* Card Swap specific pickers */}
             {selectedItem.type === 'cardSwap' && (
               <div className="space-y-3 mb-4">
                 <div className="text-xs text-text-muted">
@@ -296,7 +316,8 @@ export const ItemControls: React.FC<ItemControlsProps> = ({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

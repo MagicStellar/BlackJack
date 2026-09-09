@@ -157,10 +157,10 @@ export const PlayerSeat: React.FC<PlayerSeatProps> = ({
   );
 
   const cards = (
-    <div className="flex items-center justify-center overflow-visible py-2" style={{ minHeight: useCompactCards ? '92px' : '128px' }}>
+    <div className="flex items-center justify-center overflow-visible py-2" style={{ minHeight: useCompactCards ? '104px' : '128px' }}>
       {player.hand.length === 0 ? (
         <div className={`rounded-md sm:rounded-lg border-2 border-dashed border-felt-line/35 flex items-center justify-center text-felt-line/40 text-[9px] aspect-[5/7] ${
-          useCompactCards ? 'w-[3.4rem] sm:w-14' : 'w-16 sm:w-[4.5rem]'
+          useCompactCards ? 'w-14 sm:w-16' : 'w-16 sm:w-[4.5rem]'
         }`}>
           —
         </div>

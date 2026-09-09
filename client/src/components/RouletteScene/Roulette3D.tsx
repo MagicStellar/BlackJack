@@ -336,7 +336,7 @@ export const RouletteModal: React.FC = () => {
                 <Shield className="w-3.5 h-3.5" /> Aegis Shield is primed to intercept
               </span>
             ) : (
-              'Placed lowest this round. Facing elimination.'
+              `${rouletteTargetPlayer.name} is facing the revolver`
             )}
           </p>
         </div>
